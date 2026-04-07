@@ -1,0 +1,8 @@
+naming:
+  types:
+    pin:
+      prefix: "Lang"
+  functions:
+    suppress:
+      prefix: true
+      suffix: true
