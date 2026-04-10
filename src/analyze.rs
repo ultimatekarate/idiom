@@ -5,6 +5,17 @@ use crate::spec::{NamingOverrides, RoleOverride};
 use std::collections::HashMap;
 use std::path::Path;
 
+/// Minimum number of distinct call sites that must share a candidate
+/// pattern before Idiom is willing to call it a "convention." A
+/// previous floor of 2 produced false positives like
+/// `from_defaults`/`from_slice` becoming a "constructor names should
+/// end with `_defaults`" rule. Bumping the floor to 3 kills the
+/// two-witness coincidences without losing any patterns that have
+/// genuine support across the codebase. Track regressions by
+/// re-running `idiom infer` on the four governed crates after any
+/// change to this value.
+pub const MIN_PATTERN_SUPPORT: usize = 3;
+
 /// A named declaration extracted from source code.
 #[derive(Debug, Clone)]
 pub struct NamedDecl {
@@ -28,7 +39,7 @@ pub fn extract_patterns(decls: &[NamedDecl]) -> Vec<NamingPattern> {
     }
 
     for (role, names) in &by_role {
-        if names.len() < 2 {
+        if names.len() < MIN_PATTERN_SUPPORT {
             continue;
         }
 
@@ -172,7 +183,7 @@ fn detect_snake_prefix(names: &[&str], role: SyntacticRole) -> Option<NamingPatt
         .collect();
 
     let multi_segment: Vec<&Vec<&str>> = split_names.iter().filter(|s| s.len() >= 2).collect();
-    if multi_segment.len() < 2 {
+    if multi_segment.len() < MIN_PATTERN_SUPPORT {
         return None;
     }
 
@@ -183,7 +194,7 @@ fn detect_snake_prefix(names: &[&str], role: SyntacticRole) -> Option<NamingPatt
     }
 
     let (best_segment, count) = freq.into_iter().max_by_key(|(_, c)| *c)?;
-    if count < 2 || best_segment.is_empty() {
+    if count < MIN_PATTERN_SUPPORT || best_segment.is_empty() {
         return None;
     }
 
@@ -228,7 +239,7 @@ fn detect_camel_prefix(names: &[&str], role: SyntacticRole) -> Option<NamingPatt
         .filter(|(_, w)| w.len() >= 2)
         .collect();
 
-    if multi_word.len() < 2 {
+    if multi_word.len() < MIN_PATTERN_SUPPORT {
         return None;
     }
 
@@ -239,7 +250,7 @@ fn detect_camel_prefix(names: &[&str], role: SyntacticRole) -> Option<NamingPatt
     }
 
     let (best_word, count) = freq.into_iter().max_by_key(|(_, c)| *c)?;
-    if count < 2 || best_word.is_empty() {
+    if count < MIN_PATTERN_SUPPORT || best_word.is_empty() {
         return None;
     }
 
@@ -285,7 +296,7 @@ fn detect_suffix(names: &[&str], role: SyntacticRole) -> Option<NamingPattern> {
         .filter_map(|s| s.as_deref())
         .collect();
 
-    if valid_suffixes.len() >= 2 {
+    if valid_suffixes.len() >= MIN_PATTERN_SUPPORT {
         // Count frequency of each suffix
         let mut freq: HashMap<&str, usize> = HashMap::new();
         for s in &valid_suffixes {
@@ -293,7 +304,7 @@ fn detect_suffix(names: &[&str], role: SyntacticRole) -> Option<NamingPattern> {
         }
 
         if let Some((best_suffix, count)) = freq.iter().max_by_key(|(_, c)| **c) {
-            if *count >= 2 {
+            if *count >= MIN_PATTERN_SUPPORT {
                 let mut matching = Vec::new();
                 let mut exceptions = Vec::new();
 
@@ -326,7 +337,7 @@ fn detect_suffix(names: &[&str], role: SyntacticRole) -> Option<NamingPattern> {
         .collect();
 
     let multi_segment: Vec<&Vec<&str>> = split_names.iter().filter(|s| s.len() >= 2).collect();
-    if multi_segment.len() < 2 {
+    if multi_segment.len() < MIN_PATTERN_SUPPORT {
         return None;
     }
 
@@ -341,7 +352,7 @@ fn detect_suffix(names: &[&str], role: SyntacticRole) -> Option<NamingPattern> {
     }
 
     let (best_segment, count) = freq.into_iter().max_by_key(|(_, c)| *c)?;
-    if count < 2 {
+    if count < MIN_PATTERN_SUPPORT {
         return None;
     }
 
@@ -415,7 +426,7 @@ fn detect_casing(names: &[&str], role: SyntacticRole) -> Option<NamingPattern> {
 
     let (best_style, matching) = counts.into_iter().max_by_key(|(_, v)| v.len())?;
 
-    if matching.len() < 2 {
+    if matching.len() < MIN_PATTERN_SUPPORT {
         return None;
     }
 
