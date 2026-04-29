@@ -3,7 +3,6 @@ use crate::analyze::NamedDecl;
 use crate::pattern::SyntacticRole;
 
 pub static JAVA: LangDef = LangDef {
-    name: "java",
     extensions: &["java"],
     extract_names,
 };
@@ -76,7 +75,7 @@ fn extract_names(content: &str) -> Vec<NamedDecl> {
                     && name != "if"
                     && name != "for"
                     && name != "while"
-                    && name.chars().next().map_or(false, |c| c.is_lowercase())
+                    && name.chars().next().is_some_and(|c| c.is_lowercase())
                 {
                     decls.push(NamedDecl {
                         name: name.to_string(),

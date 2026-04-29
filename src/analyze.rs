@@ -100,7 +100,6 @@ pub fn check_against_patterns(
                     name: decl.name.clone(),
                     role: decl.role,
                     expected_pattern: pattern.kind.clone(),
-                    confidence: pattern.confidence,
                     message: format!(
                         "{} name '{}' does not match local convention: {}",
                         decl.role, decl.name, pattern.kind
@@ -124,7 +123,7 @@ pub fn matches_pattern(name: &str, kind: &PatternKind) -> bool {
                 // CamelCase prefix: first word must match (case-insensitive)
                 use crate::language::split_identifier_words;
                 let words = split_identifier_words(name);
-                words.first().map_or(false, |w| w == p)
+                words.first() == Some(p)
             }
         }
         PatternKind::Suffix(s) => name.ends_with(s.as_str()),
@@ -457,7 +456,7 @@ pub fn detect_casing_style(name: &str) -> Option<CasingStyle> {
     let has_underscore = name.contains('_');
     let has_uppercase = name.chars().any(|c| c.is_uppercase());
     let has_lowercase = name.chars().any(|c| c.is_lowercase());
-    let starts_upper = name.chars().next().map_or(false, |c| c.is_uppercase());
+    let starts_upper = name.chars().next().is_some_and(|c| c.is_uppercase());
 
     if has_underscore && !has_lowercase && has_uppercase {
         Some(CasingStyle::ScreamingSnakeCase)

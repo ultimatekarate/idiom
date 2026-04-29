@@ -3,7 +3,6 @@ use crate::analyze::NamedDecl;
 use crate::pattern::SyntacticRole;
 
 pub static RUST: LangDef = LangDef {
-    name: "rust",
     extensions: &["rs"],
     extract_names,
 };

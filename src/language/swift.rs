@@ -3,7 +3,6 @@ use crate::analyze::NamedDecl;
 use crate::pattern::SyntacticRole;
 
 pub static SWIFT: LangDef = LangDef {
-    name: "swift",
     extensions: &["swift"],
     extract_names,
 };

@@ -3,7 +3,6 @@ use crate::analyze::NamedDecl;
 use crate::pattern::SyntacticRole;
 
 pub static CSHARP: LangDef = LangDef {
-    name: "csharp",
     extensions: &["cs"],
     extract_names,
 };
@@ -67,13 +66,13 @@ fn extract_names(content: &str) -> Vec<NamedDecl> {
                     .unwrap_or(before_paren);
                 if !name.is_empty()
                     && !name.starts_with('_')
-                    && name.chars().next().map_or(false, |c| c.is_alphabetic())
+                    && name.chars().next().is_some_and(|c| c.is_alphabetic())
                     && name != "class"
                     && name != "new"
                     && name != "if"
                     && name != "for"
                     && name != "while"
-                    && name.chars().next().map_or(false, |c| c.is_uppercase())
+                    && name.chars().next().is_some_and(|c| c.is_uppercase())
                 {
                     // C# methods are PascalCase — only capture PascalCase names
                     decls.push(NamedDecl {

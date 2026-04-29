@@ -3,7 +3,6 @@ use crate::analyze::NamedDecl;
 use crate::pattern::SyntacticRole;
 
 pub static KOTLIN: LangDef = LangDef {
-    name: "kotlin",
     extensions: &["kt", "kts"],
     extract_names,
 };

@@ -9,12 +9,10 @@ pub mod rust_lang;
 pub mod swift;
 
 use crate::analyze::NamedDecl;
-use crate::pattern::SyntacticRole;
 use std::collections::HashMap;
 
 /// A language-specific name extractor.
 pub struct LangDef {
-    pub name: &'static str,
     pub extensions: &'static [&'static str],
     pub extract_names: fn(&str) -> Vec<NamedDecl>,
 }
@@ -94,89 +92,6 @@ pub fn split_identifier_words(name: &str) -> Vec<String> {
     words
 }
 
-/// Helper: extract function and type declarations from lines using generic patterns.
-/// Used by languages that follow common declaration syntaxes.
-pub fn extract_with_patterns(
-    content: &str,
-    fn_keywords: &[&str],
-    type_keywords: &[&str],
-) -> Vec<NamedDecl> {
-    let mut decls = Vec::new();
-
-    for (line_num, line) in content.lines().enumerate() {
-        let trimmed = line.trim();
-
-        // Skip comments
-        if trimmed.starts_with("//") || trimmed.starts_with('#') || trimmed.starts_with("/*") {
-            continue;
-        }
-
-        // Check function declarations
-        for kw in fn_keywords {
-            if let Some(rest) = find_keyword_in_line(trimmed, kw) {
-                let name = extract_name_before_paren(rest);
-                if !name.is_empty() && !name.starts_with('_') {
-                    decls.push(NamedDecl {
-                        name: name.to_string(),
-                        role: SyntacticRole::Function,
-                        line: line_num + 1,
-                    });
-                }
-                break;
-            }
-        }
-
-        // Check type declarations
-        for kw in type_keywords {
-            if let Some(rest) = find_keyword_in_line(trimmed, kw) {
-                let name = extract_name_before_delimiter(rest);
-                if !name.is_empty() && !name.starts_with('_') {
-                    decls.push(NamedDecl {
-                        name: name.to_string(),
-                        role: SyntacticRole::Type,
-                        line: line_num + 1,
-                    });
-                }
-                break;
-            }
-        }
-    }
-
-    decls
-}
-
-/// Find a keyword in a line, returning the text after it.
-fn find_keyword_in_line<'a>(line: &'a str, keyword: &str) -> Option<&'a str> {
-    // The keyword must appear as a word boundary (preceded by nothing or whitespace)
-    for (i, _) in line.match_indices(keyword) {
-        if i == 0 || line.as_bytes().get(i - 1).map_or(true, |b| !b.is_ascii_alphanumeric()) {
-            let after = &line[i + keyword.len()..];
-            if !after.is_empty() {
-                return Some(after);
-            }
-        }
-    }
-    None
-}
-
-/// Extract identifier name before the first `(`, `<`, `{`, or `:`.
-fn extract_name_before_paren(s: &str) -> &str {
-    let s = s.trim();
-    let end = s
-        .find(|c: char| c == '(' || c == '<' || c == '{' || c == ':')
-        .unwrap_or(s.len());
-    s[..end].trim()
-}
-
-/// Extract identifier name before the first `(`, `<`, `{`, `:`, or whitespace.
-fn extract_name_before_delimiter(s: &str) -> &str {
-    let s = s.trim();
-    let end = s
-        .find(|c: char| c == '(' || c == '<' || c == '{' || c == ':' || c == ' ' || c == '\t')
-        .unwrap_or(s.len());
-    s[..end].trim()
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -199,12 +114,5 @@ mod tests {
     #[test]
     fn split_acronym() {
         assert_eq!(split_identifier_words("HTTPClient"), vec!["http", "client"]);
-    }
-
-    #[test]
-    fn extract_name_before_paren_works() {
-        assert_eq!(extract_name_before_paren("handle_event(self)"), "handle_event");
-        assert_eq!(extract_name_before_paren("MyType<T>"), "MyType");
-        assert_eq!(extract_name_before_paren("foo"), "foo");
     }
 }

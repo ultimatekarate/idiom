@@ -3,7 +3,6 @@ use crate::analyze::NamedDecl;
 use crate::pattern::SyntacticRole;
 
 pub static PYTHON: LangDef = LangDef {
-    name: "python",
     extensions: &["py"],
     extract_names,
 };
@@ -20,12 +19,10 @@ fn extract_names(content: &str) -> Vec<NamedDecl> {
         }
 
         // Function declarations
-        if trimmed.starts_with("def ") || trimmed.starts_with("async def ") {
-            let after_keyword = if trimmed.starts_with("async def ") {
-                &trimmed[10..]
-            } else {
-                &trimmed[4..]
-            };
+        if let Some(after_keyword) = trimmed
+            .strip_prefix("async def ")
+            .or_else(|| trimmed.strip_prefix("def "))
+        {
             let name = after_keyword
                 .split('(')
                 .next()
@@ -41,8 +38,7 @@ fn extract_names(content: &str) -> Vec<NamedDecl> {
         }
 
         // Class declarations
-        if trimmed.starts_with("class ") {
-            let after_class = &trimmed[6..];
+        if let Some(after_class) = trimmed.strip_prefix("class ") {
             let name = after_class
                 .split(&['(', ':'][..])
                 .next()

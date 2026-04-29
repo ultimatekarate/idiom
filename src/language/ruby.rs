@@ -3,7 +3,6 @@ use crate::analyze::NamedDecl;
 use crate::pattern::SyntacticRole;
 
 pub static RUBY: LangDef = LangDef {
-    name: "ruby",
     extensions: &["rb"],
     extract_names,
 };
@@ -19,8 +18,7 @@ fn extract_names(content: &str) -> Vec<NamedDecl> {
         }
 
         // def method_name
-        if trimmed.starts_with("def ") {
-            let after_def = &trimmed[4..];
+        if let Some(after_def) = trimmed.strip_prefix("def ") {
             // Handle self.method_name for class methods
             let name_part = after_def
                 .strip_prefix("self.")

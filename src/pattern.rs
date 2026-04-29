@@ -33,6 +33,7 @@ pub enum PatternKind {
 }
 
 /// Casing conventions detected in identifiers.
+#[allow(clippy::enum_variant_names)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum CasingStyle {
     SnakeCase,
@@ -68,7 +69,6 @@ pub struct Deviation {
     pub name: String,
     pub role: SyntacticRole,
     pub expected_pattern: PatternKind,
-    pub confidence: Confidence,
     pub message: String,
 }
 

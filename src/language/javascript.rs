@@ -3,7 +3,6 @@ use crate::analyze::NamedDecl;
 use crate::pattern::SyntacticRole;
 
 pub static JAVASCRIPT: LangDef = LangDef {
-    name: "js",
     extensions: &["js", "ts", "jsx", "tsx"],
     extract_names,
 };
@@ -44,51 +43,35 @@ fn extract_names(content: &str) -> Vec<NamedDecl> {
 
         // Arrow function assigned to const: const foo = (...) =>
         // Also catches: export const foo = (...) =>
-        if (trimmed.starts_with("const ") || trimmed.starts_with("export const "))
-            && (trimmed.contains("=>") || trimmed.contains("= (") || trimmed.contains("= async"))
+        if let Some(after_const) = trimmed
+            .strip_prefix("export const ")
+            .or_else(|| trimmed.strip_prefix("const "))
         {
-            let after_const = if trimmed.starts_with("export const ") {
-                &trimmed[13..]
-            } else {
-                &trimmed[6..]
-            };
-            let name = after_const
-                .split(&['=', ':', ' '][..])
-                .next()
-                .unwrap_or("")
-                .trim();
-            if !name.is_empty() && !name.starts_with('_') {
-                decls.push(NamedDecl {
-                    name: name.to_string(),
-                    role: SyntacticRole::Function,
-                    line: line_num + 1,
-                });
+            if trimmed.contains("=>") || trimmed.contains("= (") || trimmed.contains("= async") {
+                let name = after_const
+                    .split(&['=', ':', ' '][..])
+                    .next()
+                    .unwrap_or("")
+                    .trim();
+                if !name.is_empty() && !name.starts_with('_') {
+                    decls.push(NamedDecl {
+                        name: name.to_string(),
+                        role: SyntacticRole::Function,
+                        line: line_num + 1,
+                    });
+                }
             }
         }
 
         // Class/interface/type declarations
-        if trimmed.starts_with("class ")
-            || trimmed.starts_with("export class ")
-            || trimmed.starts_with("interface ")
-            || trimmed.starts_with("export interface ")
-            || trimmed.starts_with("type ")
-            || trimmed.starts_with("export type ")
+        if let Some(after_kw) = trimmed
+            .strip_prefix("export class ")
+            .or_else(|| trimmed.strip_prefix("export interface "))
+            .or_else(|| trimmed.strip_prefix("export type "))
+            .or_else(|| trimmed.strip_prefix("class "))
+            .or_else(|| trimmed.strip_prefix("interface "))
+            .or_else(|| trimmed.strip_prefix("type "))
         {
-            let after_kw = if trimmed.starts_with("export class ") {
-                &trimmed[13..]
-            } else if trimmed.starts_with("export interface ") {
-                &trimmed[17..]
-            } else if trimmed.starts_with("export type ") {
-                &trimmed[12..]
-            } else if trimmed.starts_with("class ") {
-                &trimmed[6..]
-            } else if trimmed.starts_with("interface ") {
-                &trimmed[10..]
-            } else if trimmed.starts_with("type ") {
-                &trimmed[5..]
-            } else {
-                continue;
-            };
             let name = after_kw
                 .split(&['<', '{', ' ', '=', '('][..])
                 .next()

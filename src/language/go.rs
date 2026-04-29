@@ -3,7 +3,6 @@ use crate::analyze::NamedDecl;
 use crate::pattern::SyntacticRole;
 
 pub static GO: LangDef = LangDef {
-    name: "go",
     extensions: &["go"],
     extract_names,
 };
@@ -19,9 +18,7 @@ fn extract_names(content: &str) -> Vec<NamedDecl> {
         }
 
         // func declarations: func Foo(), func (r *Receiver) Foo()
-        if trimmed.starts_with("func ") {
-            let after_func = &trimmed[5..];
-
+        if let Some(after_func) = trimmed.strip_prefix("func ") {
             // Method with receiver: func (r *Type) Name(...)
             let name_part = if after_func.starts_with('(') {
                 // Skip past receiver
@@ -49,8 +46,7 @@ fn extract_names(content: &str) -> Vec<NamedDecl> {
         }
 
         // type declarations: type Foo struct, type Foo interface
-        if trimmed.starts_with("type ") {
-            let after_type = &trimmed[5..];
+        if let Some(after_type) = trimmed.strip_prefix("type ") {
             let name = after_type
                 .split_whitespace()
                 .next()

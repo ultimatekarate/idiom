@@ -170,7 +170,7 @@ pub fn render_deviations_json(deviations: &[Deviation]) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::pattern::{Confidence, SyntacticRole};
+    use crate::pattern::SyntacticRole;
     use std::path::PathBuf;
 
     #[test]
@@ -181,7 +181,6 @@ mod tests {
             name: "process_envelope".into(),
             role: SyntacticRole::Function,
             expected_pattern: PatternKind::Prefix("handle_".into()),
-            confidence: Confidence::High,
             message: "function name 'process_envelope' does not match local convention: prefix 'handle_'"
                 .into(),
         };
