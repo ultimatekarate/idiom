@@ -1,3 +1,5 @@
+[![CI](https://github.com/ultimatekarate/idiom/actions/workflows/ci.yml/badge.svg)](https://github.com/ultimatekarate/idiom/actions/workflows/ci.yml)
+
 # Idiom
 
 Local naming-convention governance for your codebase. Idiom infers naming patterns from sibling files in a directory and enforces them against new code.
